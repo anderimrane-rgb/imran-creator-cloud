@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Imran Creator Suite — Owner Cloud Admin Dashboard</title>
+<style>
+  :root{--bg:#0b0e14;--card:#141923;--line:#232b3a;--ink:#f1f5f9;--muted:#94a3b8;--accent:#7c3aed;--accent2:#ec4899;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#0f141e;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .brand{font-weight:800;font-size:17px;display:flex;align-items:center;gap:10px}
+  .pill{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(124,58,237,.2);color:#c4b5fd;font-weight:700}
+  .wrap{max-width:1280px;margin:22px auto;padding:0 18px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-weight:700}
+  .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-bottom:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .stat .v{font-size:28px;font-weight:800;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+  h3{margin:0 0 12px;font-size:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{color:var(--muted);font-size:11.5px;text-transform:uppercase}
+  .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+  .b-pro{background:rgba(16,185,129,.18);color:#34d399}
+  .b-trial{background:rgba(59,130,246,.2);color:#60a5fa}
+  .b-exp{background:rgba(245,158,11,.2);color:#fbbf24}
+  .b-bad{background:rgba(239,68,68,.2);color:#f87171}
+  input,select,textarea{background:#0c1018;color:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;width:100%}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{border:0;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:13px;color:#fff;background:var(--accent)}
+  .btn:hover{opacity:.92}
+  .btn.sm{padding:5px 10px;font-size:11.5px}
+  .btn.ok{background:var(--ok)}.btn.warn{background:var(--warn);color:#111}.btn.bad{background:var(--bad)}.btn.ghost{background:#1f2737;color:#e2e8f0}
+  .login-box{max-width:380px;margin:11vh auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;text-align:center}
+  .panel{display:none}.panel.active{display:block}
+  .flag-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#0f141e}
+  .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}
+</style>
+</head>
+<body>
+
+{% if not authed %}
+<div class="login-box">
+  <div style="font-size:34px;margin-bottom:6px">👑</div>
+  <h2 style="margin:0 0 6px">Owner Cloud Control</h2>
+  <p style="color:var(--muted);margin:0 0 18px;font-size:13px">Private Admin Dashboard — Imran Creator Suite</p>
+  <div id="loginErr" style="color:var(--bad);font-size:12.5px;min-height:18px;margin-bottom:8px"></div>
+  <input id="admUser" placeholder="Admin Username" value="{{ admin_user }}" style="margin-bottom:10px" />
+  <input id="admPass" type="password" placeholder="Admin Password" style="margin-bottom:14px" />
+  <button class="btn" style="width:100%" onclick="doLogin()">Sign In to Admin Panel</button>
+</div>
+<script>
+async function doLogin(){
+  const r = await fetch('/api/v1/admin/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body:JSON.stringify({username:document.getElementById('admUser').value,password:document.getElementById('admPass').value})
+  });
+  const d = await r.json();
+  if(d.ok){
+    if(d.admin_key) localStorage.setItem('imran_admin_key', d.admin_key);
+    location.reload();
+  } else {
+    document.getElementById('loginErr').textContent = d.error || 'Login failed';
+  }
+}
+document.getElementById('admPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+{% else %}
+<div class="topbar">
+  <div class="brand">👑 Imran Creator Suite <span class="pill">CLOUD CONTROL PLANE</span></div>
+  <div class="row">
+    <span class="mono" style="color:var(--muted)">Owner: {{ admin_user }}</span>
+    <button class="btn ghost sm" onclick="refreshAll()">🔄 Refresh</button>
+    <button class="btn bad sm" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid" id="statsGrid"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('devices',this)">💻 Users &amp; Devices</button>
+    <button class="tab" onclick="showTab('licenses',this)">🔑 Licenses</button>
+    <button class="tab" onclick="showTab('releases',this)">🚀 Live Updates</button>
+    <button class="tab" onclick="showTab('config',this)">🎛️ Feature Flags &amp; Config</button>
+    <button class="tab" onclick="showTab('logs',this)">🛡️ Security Logs</button>
+  </div>
+
+  <!-- DEVICES PANEL -->
+  <div id="panel-devices" class="panel active">
+    <div class="card">
+      <h3>Registered PCs, 72-Hour Trials &amp; Device Control</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Device ID</th><th>Hostname / OS</th><th>Version</th><th>Status</th><th>Plan / Trial</th><th>Last Seen</th><th>Actions</th></tr></thead>
+          <tbody id="devicesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LICENSES PANEL -->
+  <div id="panel-licenses" class="panel">
+    <div class="card">
+      <h3>Generate New License Key</h3>
+      <div class="row">
+        <select id="licPlan" style="width:170px">
+          <option value="lifetime">Lifetime VIP</option>
+          <option value="yearly">Yearly Pro (365d)</option>
+          <option value="monthly">Monthly Pass (30d)</option>
+          <option value="gift_30d">30-Day Gift</option>
+        </select>
+        <input id="licMaxDev" type="number" min="1" max="20" value="1" style="width:100px" placeholder="Max PCs" />
+        <input id="licDays" type="number" min="1" style="width:120px" placeholder="Days (auto)" />
+        <input id="licTargetDev" style="width:200px" placeholder="Device ID (optional auto-bind)" />
+        <input id="licEmail" style="width:200px" placeholder="Customer WhatsApp / Email" />
+        <button class="btn ok" onclick="genLicense()">⚡ Generate Key</button>
+      </div>
+      <div id="newKeyBox" style="margin-top:14px;display:none;background:#0d1829;border:1px solid #10b981;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:11px;color:#34d399;font-weight:700;text-transform:uppercase">✅ License Key Generated Successfully:</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+          <span id="newKeyText" class="mono" style="font-size:18px;font-weight:800;color:#fff;letter-spacing:1px"></span>
+          <button class="btn ghost sm" onclick="copyGenKey()">📋 Copy Key</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>All Issued Licenses</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>License Key</th><th>Plan</th><th>Status</th><th>Devices</th><th>Expires</th><th>Customer</th><th>Actions</th></tr></thead>
+          <tbody id="licensesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELEASES PANEL -->
+  <div id="panel-releases" class="panel">
+    <div class="card">
+      <h3>Publish New Software Update (Auto-Delivered to All Users)</h3>
+      <div class="row" style="margin-bottom:10px">
+        <input id="relVer" placeholder="Version (e.g. 2.1.0)" style="width:160px" />
+        <input id="relMinVer" placeholder="Min Supported (e.g. 2.0.0)" value="2.0.0" style="width:190px" />
+        <label style="display:flex;align-items:center;gap:6px;color:var(--muted)"><input id="relMand" type="checkbox" style="width:auto" /> Mandatory Update</label>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <input id="relUrl" placeholder="GitHub Releases / CDN ZIP URL (or upload ZIP below)" style="flex:1" />
+        <input id="relSha" placeholder="SHA-256 (required if URL)" style="width:280px" />
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <input id="relFile" type="file" accept=".zip" style="max-width:340px" />
+      </div>
+      <textarea id="relNotes" rows="2" placeholder="Release notes shown to users..." style="margin-bottom:10px"></textarea>
+      <button class="btn ok" onclick="publishRelease()">🚀 Publish Signed Release</button>
+      <div id="relMsg" style="margin-top:8px;font-size:12.5px"></div>
+    </div>
+    <div class="card">
+      <h3>Release History</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Version</th><th>Min Ver</th><th>Mandatory</th><th>SHA-256</th><th>Notes</th><th>Published</th></tr></thead>
+          <tbody id="releasesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG & FEATURE FLAGS PANEL -->
+  <div id="panel-config" class="panel">
+    <div class="card">
+      <h3>Remote Configuration &amp; Announcements</h3>
+      <div class="row" style="margin-bottom:10px">
+        <div style="flex:1;min-width:160px"><label style="font-size:11.5px;color:var(--muted)">Trial Hours (default 72)</label><input id="cfgTrial" type="number" /></div>
+        <div style="flex:1;min-width:160px"><label style="font-size:11.5px;color:var(--muted)">Min Supported Version</label><input id="cfgMinVer" /></div>
+        <div style="flex:1;min-width:160px"><label style="font-size:11.5px;color:var(--muted)">Offline Grace Hours</label><input id="cfgGrace" type="number" /></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11.5px;color:var(--muted)">Purchase License URL</label><input id="cfgPurchase" /></div>
+      <div style="margin-bottom:10px"><label style="font-size:11.5px;color:var(--muted)">Announcement Banner (shown to all users)</label><input id="cfgAnnounce" placeholder="Leave empty to hide banner" /></div>
+      <div class="row" style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:6px"><input id="cfgMaint" type="checkbox" style="width:auto" /> Maintenance Mode</label>
+        <input id="cfgMaintMsg" placeholder="Maintenance notice message..." style="flex:1" />
+      </div>
+      <h3>Feature Flags (Enable / Disable Modules Remotely)</h3>
+      <div id="flagsBox"></div>
+      <button class="btn ok" style="margin-top:10px" onclick="saveConfig()">💾 Save Remote Configuration</button>
+      <div id="cfgMsg" style="margin-top:8px;color:var(--ok);font-size:12.5px"></div>
+    </div>
+  </div>
+
+  <!-- LOGS PANEL -->
+  <div id="panel-logs" class="panel">
+    <div class="card">
+      <h3>Security &amp; Activation Audit Logs</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Time (UTC)</th><th>Event</th><th>Device</th><th>IP</th><th>Details</th></tr></thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCfg = {};
+
+function showTab(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+const SERVER_ADMIN_KEY = "{{ admin_key or '' }}";
+if(SERVER_ADMIN_KEY) { localStorage.setItem('imran_admin_key', SERVER_ADMIN_KEY); }
+
+async function api(url, opts={}){
+  opts.headers = opts.headers || {};
+  opts.credentials = 'include';
+  const k = localStorage.getItem('imran_admin_key') || SERVER_ADMIN_KEY;
+  if(k && !opts.headers['X-Admin-Key']){
+    opts.headers['X-Admin-Key'] = k;
+    opts.headers['Authorization'] = 'Bearer ' + k;
+  }
+  const r = await fetch(url, opts);
+  return await r.json();
+}
+
+function fmtRem(sec){
+  if(!sec || sec<=0) return '0h';
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  return `${h}h ${m}m left`;
+}
+
+async function refreshAll(){
+  const ov = await api('/api/v1/admin/overview');
+  if(!ov.ok){ location.reload(); return; }
+  const s = ov.stats;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat"><div class="k">Total PCs</div><div class="v">${s.total}</div></div>
+    <div class="stat"><div class="k">Active (24h)</div><div class="v" style="color:#60a5fa">${s.active_24h}</div></div>
+    <div class="stat"><div class="k">Paid PRO</div><div class="v" style="color:#34d399">${s.paid}</div></div>
+    <div class="stat"><div class="k">Active Trial</div><div class="v" style="color:#a78bfa">${s.trial}</div></div>
+    <div class="stat"><div class="k">Expired</div><div class="v" style="color:#fbbf24">${s.expired}</div></div>
+    <div class="stat"><div class="k">Blocked</div><div class="v" style="color:#f87171">${s.blocked}</div></div>
+    <div class="stat"><div class="k">Latest Ver</div><div class="v" style="font-size:22px">v${ov.current_version}</div></div>
+  `;
+
+  const devRes = await api('/api/v1/admin/devices');
+  document.getElementById('devicesBody').innerHTML = (devRes.devices||[]).map(d=>{
+    const cls = d.access_status==='pro'?'b-pro':(d.access_status==='trial'?'b-trial':(d.access_status==='blocked'?'b-bad':'b-exp'));
+    const info = d.access_status==='trial'?fmtRem(d.trial_remaining_seconds):(d.plan||'-');
+    return `<tr>
+      <td class="mono" style="font-weight:700">${d.device_id}</td>
+      <td>${d.hostname||'-'}<div style="font-size:11px;color:var(--muted)">${d.os_info||''}</div></td>
+      <td class="mono">v${d.app_version}</td>
+      <td><span class="badge ${cls}">${d.access_status.toUpperCase()}</span></td>
+      <td>${info}</td>
+      <td class="mono" style="font-size:11px">${(d.last_seen_at||'').replace('T',' ').slice(0,19)}</td>
+      <td class="row">
+        ${d.status==='blocked'
+          ? `<button class="btn ok sm" onclick="devAction('${d.device_id}','unblock')">Unblock</button>`
+          : `<button class="btn bad sm" onclick="devAction('${d.device_id}','block')">Block</button>`}
+        ${d.access_status!=='pro'
+          ? `<button class="btn ok sm" onclick="upgradeDevicePro('${d.device_id}')">⚡ Upgrade VIP</button>`
+          : ''}
+        <button class="btn ghost sm" onclick="setTrial('${d.device_id}')">Set Trial</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="color:var(--muted)">No devices registered yet.</td></tr>';
+
+  const licRes = await api('/api/v1/admin/licenses');
+  document.getElementById('licensesBody').innerHTML = (licRes.licenses||[]).map(l=>{
+    const cls = l.status==='active'?'b-pro':(l.status==='revoked'?'b-bad':'b-exp');
+    return `<tr>
+      <td class="mono" style="font-weight:700">${l.license_key}</td>
+      <td>${l.plan}</td>
+      <td><span class="badge ${cls}">${l.status.toUpperCase()}</span></td>
+      <td>${(l.active_devices||[]).length} / ${l.max_devices}</td>
+      <td class="mono" style="font-size:11px">${l.expires_at ? l.expires_at.slice(0,10) : 'Never'}</td>
+      <td>${l.customer_email||'-'}</td>
+      <td class="row">
+        ${l.status==='active'
+          ? `<button class="btn bad sm" onclick="licAction('${l.license_key}','revoke')">Revoke</button>`
+          : `<button class="btn ok sm" onclick="licAction('${l.license_key}','activate')">Activate</button>`}
+        <button class="btn ghost sm" onclick="extendLic('${l.license_key}')">+30d</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="color:var(--muted)">No licenses generated yet.</td></tr>';
+
+  const relRes = await api('/api/v1/admin/releases');
+  document.getElementById('releasesBody').innerHTML = (relRes.releases||[]).map(r=>`<tr>
+    <td class="mono" style="font-weight:700">v${r.version}</td>
+    <td class="mono">v${r.min_supported_version}</td>
+    <td>${r.is_mandatory?'Yes':'No'}</td>
+    <td class="mono" style="font-size:11px">${(r.sha256||'').slice(0,16)}…</td>
+    <td>${r.release_notes||'-'}</td>
+    <td class="mono" style="font-size:11px">${(r.published_at||'').slice(0,19).replace('T',' ')}</td>
+  </tr>`).join('') || '<tr><td colspan="6" style="color:var(--muted)">No releases published yet.</td></tr>';
+
+  const cfgRes = await api('/api/v1/admin/config');
+  currentCfg = cfgRes.config || {};
+  document.getElementById('cfgTrial').value = currentCfg.trial_hours ?? 72;
+  document.getElementById('cfgMinVer').value = currentCfg.min_supported_version || '2.0.0';
+  document.getElementById('cfgGrace').value = currentCfg.offline_grace_hours ?? 24;
+  document.getElementById('cfgPurchase').value = currentCfg.purchase_url || '';
+  document.getElementById('cfgAnnounce').value = currentCfg.announcement_banner || '';
+  document.getElementById('cfgMaint').checked = !!currentCfg.maintenance_mode;
+  document.getElementById('cfgMaintMsg').value = currentCfg.maintenance_message || '';
+  const flags = currentCfg.feature_flags || {};
+  document.getElementById('flagsBox').innerHTML = Object.keys(flags).map(k=>`
+    <div class="flag-row">
+      <span class="mono">${k}</span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" data-flag="${k}" ${flags[k]?'checked':''} style="width:auto" />
+        <span>${flags[k]?'Enabled':'Disabled'}</span>
+      </label>
+    </div>
+  `).join('');
+
+  const logRes = await api('/api/v1/admin/logs');
+  document.getElementById('logsBody').innerHTML = (logRes.logs||[]).map(l=>`<tr>
+    <td class="mono" style="font-size:11px">${(l.created_at||'').replace('T',' ').slice(0,19)}</td>
+    <td><span class="badge b-trial">${l.event_type}</span></td>
+    <td class="mono">${l.device_id||'-'}</td>
+    <td class="mono">${l.ip_addr||'-'}</td>
+    <td style="font-size:12px;color:var(--muted)">${l.details||''}</td>
+  </tr>`).join('');
+}
+
+async function devAction(id, act){
+  await api(`/api/v1/admin/devices/${id}/${act}`,{method:'POST'});
+  refreshAll();
+}
+async function setTrial(id){
+  const h = prompt('Enter remaining trial hours (e.g. 72, or 0 to expire immediately):', '72');
+  if(h===null) return;
+  await api(`/api/v1/admin/devices/${id}/set-trial`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hours:parseFloat(h)})});
+  refreshAll();
+}
+async function upgradeDevicePro(id){
+  if(!confirm(`Upgrade device ${id} to Lifetime VIP PRO now?`)) return;
+  const d = await api(`/api/v1/admin/devices/${encodeURIComponent(id)}/upgrade-pro`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({plan:'lifetime'})
+  });
+  if(d.ok){
+    alert(`🎉 Successfully upgraded ${id} to Lifetime VIP PRO!\nLicense Key: ${d.license_key}`);
+    refreshAll();
+  } else {
+    alert('Error: ' + (d.error || 'Failed to upgrade device'));
+  }
+}
+
+async function genLicense(){
+  const targetDev = (document.getElementById('licTargetDev').value || '').trim();
+  const rawDays = document.getElementById('licDays').value;
+  const d = await api('/api/v1/admin/licenses/generate',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      plan:document.getElementById('licPlan').value,
+      max_devices:parseInt(document.getElementById('licMaxDev').value||'1',10),
+      duration_days:rawDays ? parseInt(rawDays, 10) : null,
+      device_id:targetDev,
+      customer_email:document.getElementById('licEmail').value
+    })
+  });
+  if(d.ok){
+    const box = document.getElementById('newKeyBox');
+    const txt = document.getElementById('newKeyText');
+    if(box && txt){
+      box.style.display = 'block';
+      txt.textContent = d.license_key;
+      if(d.bound_device){
+        txt.textContent += ` (Bound to ${d.bound_device})`;
+      }
+    }
+    refreshAll();
+  } else {
+    alert(d.error || 'Error generating key');
+  }
+}
+
+function copyGenKey(){
+  const txt = (document.getElementById('newKeyText').textContent || '').split(' ')[0];
+  if(txt){
+    navigator.clipboard.writeText(txt).then(() => alert('Copied key to clipboard: ' + txt));
+  }
+}
+async function licAction(key, act){
+  await api(`/api/v1/admin/licenses/${encodeURIComponent(key)}/${act}`,{method:'POST'});
+  refreshAll();
+}
+async function extendLic(key){
+  await api(`/api/v1/admin/licenses/${encodeURIComponent(key)}/extend`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days:30})});
+  refreshAll();
+}
+async function publishRelease(){
+  const f = document.getElementById('relFile').files[0];
+  let d;
+  if(f){
+    const fd = new FormData();
+    fd.append('file', f);
+    fd.append('version', document.getElementById('relVer').value);
+    fd.append('min_supported_version', document.getElementById('relMinVer').value);
+    fd.append('release_notes', document.getElementById('relNotes').value);
+    fd.append('is_mandatory', document.getElementById('relMand').checked?'1':'0');
+    d = await api('/api/v1/admin/releases/publish',{method:'POST',body:fd});
+  } else {
+    d = await api('/api/v1/admin/releases/publish',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        version:document.getElementById('relVer').value,
+        min_supported_version:document.getElementById('relMinVer').value,
+        download_url:document.getElementById('relUrl').value,
+        sha256:document.getElementById('relSha').value,
+        release_notes:document.getElementById('relNotes').value,
+        is_mandatory:document.getElementById('relMand').checked
+      })
+    });
+  }
+  document.getElementById('relMsg').textContent = d.ok ? `✅ Published v${d.version} (Signed!)` : `❌ ${d.error}`;
+  if(d.ok) refreshAll();
+}
+async function saveConfig(){
+  const flags = {};
+  document.querySelectorAll('[data-flag]').forEach(el => { flags[el.dataset.flag] = el.checked; });
+  const d = await api('/api/v1/admin/config',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      trial_hours:parseInt(document.getElementById('cfgTrial').value||'72',10),
+      min_supported_version:document.getElementById('cfgMinVer').value,
+      offline_grace_hours:parseInt(document.getElementById('cfgGrace').value||'24',10),
+      purchase_url:document.getElementById('cfgPurchase').value,
+      announcement_banner:document.getElementById('cfgAnnounce').value,
+      maintenance_mode:document.getElementById('cfgMaint').checked,
+      maintenance_message:document.getElementById('cfgMaintMsg').value,
+      feature_flags:flags
+    })
+  });
+  document.getElementById('cfgMsg').textContent = d.ok ? '✅ Remote configuration saved & live for all users!' : '❌ Failed';
+  refreshAll();
+}
+async function doLogout(){
+  await api('/api/v1/admin/logout',{method:'POST'});
+  location.reload();
+}
+refreshAll();
+</script>
+{% endif %}
+</body>
+</html>
