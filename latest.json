@@ -1,0 +1,10 @@
+{
+  "version": "2.2.4",
+  "min_supported_version": "2.0.0",
+  "download_url": "https://github.com/anderimrane-rgb/imran-creator-cloud/releases/download/v2.2.4/ImranCreatorSuite_v2.2.4.zip",
+  "sha256": "ffff5887394f596ecb129d36df6bc9320fcaf2f3da21f180ccf6fa289d7ece43",
+  "signature": "0cd508d117afaad879ca5b7cbe4e6b28d30a50c6019d5864a86570e739ac9af5",
+  "release_notes": "v2.2.4: Global Auto-Update, Zero CMD popups, Smooth AI Auto-Reframe, Gaming Split-Screen, 3.5x GPU HD Export, YouTube 403 Fix.",
+  "is_mandatory": true,
+  "file_size": 1050924
+}
