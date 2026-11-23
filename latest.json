@@ -1,10 +1,10 @@
 {
-  "version": "2.2.4",
+  "version": "2.2.5",
   "min_supported_version": "2.0.0",
-  "download_url": "https://github.com/anderimrane-rgb/imran-creator-cloud/releases/download/v2.2.4/ImranCreatorSuite_v2.2.4_Full.zip",
-  "sha256": "45334e25610f63881245cfb6e1249fc180f472b266b9ceab437c40af437156e9",
-  "signature": "9a6e0efc59ab9a067705bc0c30f6408faaf3d414d1912c64122a33cf229e59ca",
-  "release_notes": "v2.2.4: Global Auto-Update, Zero CMD popups, Smooth AI Auto-Reframe, Gaming Split-Screen, 3.5x GPU HD Export, YouTube 403 Fix.",
+  "download_url": "https://imranmehar.pythonanywhere.com/api/v1/updates/download/ImranCreatorSuite_v2.2.5.zip",
+  "sha256": "940c5a715fc4c44b9d818da764cc91e5fdcc401486919dcc8ad19d8152042cca",
+  "signature": "66784681dfe49639730d8d5c7b340e3b0f63e3fc6bbc37accc5f9bfe3ace64e4",
+  "release_notes": "v2.2.5: Connected to live global Cloud Control Panel (imranmehar.pythonanywhere.com) for worldwide device sync & instant updates.",
   "is_mandatory": true,
-  "file_size": 161648850
+  "file_size": 1050958
 }
