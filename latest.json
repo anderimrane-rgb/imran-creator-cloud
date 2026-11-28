@@ -1,10 +1,10 @@
 {
-  "version": "2.2.5",
+  "version": "2.2.6",
   "min_supported_version": "2.0.0",
-  "download_url": "https://imranmehar.pythonanywhere.com/api/v1/updates/download/ImranCreatorSuite_v2.2.5.zip",
-  "sha256": "940c5a715fc4c44b9d818da764cc91e5fdcc401486919dcc8ad19d8152042cca",
-  "signature": "66784681dfe49639730d8d5c7b340e3b0f63e3fc6bbc37accc5f9bfe3ace64e4",
-  "release_notes": "v2.2.5: Connected to live global Cloud Control Panel (imranmehar.pythonanywhere.com) for worldwide device sync & instant updates.",
+  "download_url": "https://imranmehar.pythonanywhere.com/api/v1/updates/download/ImranCreatorSuite_v2.2.6.zip",
+  "sha256": "72407d1ed5068d17a38d06ccd104689c55c65972337c4a9e7c799f63d08e6d8f",
+  "signature": "81b670e1094ddc54f6e0b19fd006b9f58c86540effd687df078e62fe85a80ca1",
+  "release_notes": "v2.2.6: Fixed YouTube 'This video is not available' / SABR block with automatic self-updating yt-dlp engine + multi-client HD fallback.",
   "is_mandatory": true,
-  "file_size": 1050958
+  "file_size": 1054714
 }
